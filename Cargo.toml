@@ -1,0 +1,36 @@
+[package]
+name = "metalog-rs"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-2.0-only"
+repository = "https://codeberg.org/scottfk/metalog-rs"
+description = "Drop-in Rust port of metalog, the syslogd/klogd replacement"
+rust-version = "1.88"
+
+[[bin]]
+name = "metalog"
+path = "src/main.rs"
+
+[features]
+# Mirror upstream's configure switches: --with-compress is on unless
+# disabled, --with-unicode is off unless enabled.  Gentoo's USE=zlib and
+# USE=unicode map onto these.
+default = ["compress"]
+compress = []
+unicode = []
+
+[dependencies]
+libc = "0.2"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+missing_debug_implementations = "warn"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
