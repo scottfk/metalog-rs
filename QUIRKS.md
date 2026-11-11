@@ -29,7 +29,7 @@ hit.
 | medium | The program name is found by skipping to the first `:`, then to the next space. In a normal line the first `:` is in the timestamp ("Nov 11 14:58:00"). In a line without a timestamp, the text up to the first `:` is lost and the program name comes from the message, so `<13>p: hello there: world` logs as program "hello there", message "world". A line with only one `:` is dropped. | `logline.rs` (`parse_log_line`) |
 | medium | `<0>` (kern.emerg) and any non-positive priority are rejected, so the most severe kernel messages are dropped. | `logline.rs` |
 | low | Control characters become `_`, except that the last character of the line is *dropped* if it is one. Only one, so `"msg\n\n"` becomes `"msg_"`. | `logline.rs` (`sanitize`) |
-| medium | Kernel lines that span two reads from the klog child are garbled or dropped: the leftover bytes are moved from the wrong offset (the leftover *length* is used as the start). | `daemon.rs` (`process`) |
+| medium | Kernel lines that span two reads from the klog child are garbled or dropped: the leftover bytes are moved from the wrong offset (the leftover *length* is used as the start). Verified in the VM: a 7 kB kernel backlog at startup loses 1-5 lines around the 4 kB mark. Which ones depends on how the klog child's writes coalesce in the socket. | `daemon.rs` (`process`) |
 
 ## Matching
 
@@ -58,6 +58,7 @@ hit.
 |---|---|---|
 | **high** | If a remote host's DNS re-lookup fails (every 120 s) while its socket is still open, the next message dereferences the NULL lookup result and metalog crashes (SIGSEGV). | `process.rs` (`send_remote`) |
 | medium | If the klog child can't set up `klogctl()` (e.g. no CAP_SYSLOG), it returns into `main()`'s startup code. It reports "Unable to bind sockets", exits and removes the master's pid file. The master then sees the klog child die and exits too. If the klog child's read loop ends, it carries on with the master's startup instead: it binds the remaining sockets (unlinking the master's) and runs a second main loop. | `daemon.rs` (`kernel_source`) |
+| medium | The klog child sets the console log level (`-c`, default 7) and then turns the console off, which drops `console_loglevel` to its minimum. The "console on" call only runs if the child's read loop ends. Normally the master's SIGTERM kills the child first, so **after metalog stops, kernel messages stay off the console** (e.g. for the rest of a shutdown). Verified in the VM: `/proc/sys/kernel/printk` goes from `4 4 1 7` to `1 4 1 7` and stays there. | `daemon.rs` (`kernel_source`) |
 | low | A klog-child write interrupted by a signal subtracts 1 from the position and re-sends a byte. C can index before the buffer here; the port clamps at 0. | `daemon.rs` |
 | low | Termination by signal flushes the log files but not stdout (`_exit()`), and the exit status is always 1. | `daemon.rs` |
 | low | A relative `--pidfile` is silently not written, but it is unlinked at exit (relative to `/` after `--daemonize`). | `daemon.rs` (`update_pid_file`) |
