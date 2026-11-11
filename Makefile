@@ -1,6 +1,7 @@
 # Makefile - front door for building, testing and installing metalog-rs
 #
 # 20261111 - Created by Claude (claude.ai, Anthropic) - scottfk
+# 20261111 - clippy fails on warnings (-D warnings), as in openrc-rs - Claude - scottfk
 #
 #   make                  release build of target/release/metalog
 #   make check            build the C reference if needed, run every test
@@ -41,7 +42,7 @@ check: reference
 test: check
 
 clippy:
-	$(CARGO) clippy --all-targets $(CARGO_FEATURES)
+	$(CARGO) clippy --all-targets $(CARGO_FEATURES) -- -D warnings
 
 fmt:
 	$(CARGO) fmt

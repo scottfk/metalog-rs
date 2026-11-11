@@ -83,6 +83,11 @@ real `klogctl()`, so it's tested in a VM.
    Gentoo's init script, conf.d and `consolelog.sh`), rehearsed in the VM.
 4. **Later:** fix quirks as deliberate, separate changes.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
 ## License
 
 GPL-2.0, like upstream metalog (this is a derived work). The files copied
