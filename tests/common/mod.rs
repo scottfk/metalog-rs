@@ -43,6 +43,14 @@ pub enum Step {
     Settle,
     /// Sleep this many milliseconds (real time).
     Sleep(u64),
+    /// Write one record to /dev/kmsg (real-root runs only).  The kernel
+    /// forces the user facility on these.
+    Kmsg(Vec<u8>),
+    /// Write a command to /proc/sysrq-trigger, for real kernel-facility
+    /// lines (real-root runs only).
+    Sysrq(u8),
+    /// SIGKILL the klog child (real-root runs only).
+    KillKlog,
 }
 
 /// A syslog datagram as glibc's syslog(3) would send it.
@@ -79,6 +87,13 @@ pub struct Case {
     pub udp: bool,
     /// metalog daemonizes (-B): follow the pid file to the real process.
     pub daemon: bool,
+    /// Run as the real root, with no user namespace, so the klog child can
+    /// use klogctl().  Only in a test VM: these runs change kernel log
+    /// state (they drain it, and metalog sets the console log level).
+    pub real_root: bool,
+    /// Records written to /dev/kmsg after draining, before metalog starts:
+    /// the backlog its first klogctl() reads return.
+    pub backlog: Vec<Vec<u8>>,
 }
 
 impl Case {
@@ -96,7 +111,19 @@ impl Case {
             terminate: true,
             udp: false,
             daemon: false,
+            real_root: false,
+            backlog: Vec::new(),
         }
+    }
+
+    pub fn backlog(mut self, records: impl IntoIterator<Item = Vec<u8>>) -> Case {
+        self.backlog.extend(records);
+        self
+    }
+
+    pub fn real_root(mut self) -> Case {
+        self.real_root = true;
+        self
     }
 
     pub fn daemon(mut self) -> Case {
@@ -245,15 +272,31 @@ fn outq(sock: &UnixDatagram) -> i32 {
     n
 }
 
-/// metalog is blocked in poll() with no children left.
-fn idle_once(pid: u32) -> bool {
-    let Ok(sc) = std::fs::read_to_string(format!("/proc/{pid}/syscall")) else {
+/// metalog is blocked in poll() with no children left, apart from the klog
+/// child, which must be blocked reading the kernel log (syslog(2)).
+fn idle_once(pid: u32, klog: &[u32]) -> bool {
+    let syscall = |p: u32| {
+        std::fs::read_to_string(format!("/proc/{p}/syscall"))
+            .ok()
+            .map(|s| s.split_whitespace().next().unwrap_or("").to_string())
+    };
+    let Some(nr) = syscall(pid) else {
         return true; // gone
     };
-    let nr = sc.split_whitespace().next().unwrap_or("");
     let in_poll = nr == "7" || nr == "271";
     let children = std::fs::read_to_string(format!("/proc/{pid}/task/{pid}/children")).unwrap_or_default();
-    in_poll && children.trim().is_empty()
+    let others = children.split_whitespace().filter_map(|c| c.parse::<u32>().ok()).any(|c| !klog.contains(&c));
+    let klog_reading = klog.iter().all(|&k| syscall(k).is_none_or(|n| n == "103"));
+    in_poll && !others && klog_reading
+}
+
+/// The children metalog has right after startup: the klog child, if any.
+fn startup_children(pid: u32) -> Vec<u32> {
+    std::fs::read_to_string(format!("/proc/{pid}/task/{pid}/children"))
+        .unwrap_or_default()
+        .split_whitespace()
+        .filter_map(|c| c.parse().ok())
+        .collect()
 }
 
 /// The metalog under test: our child, or (with -B) the daemon it forked.
@@ -261,6 +304,8 @@ struct Proc {
     child: Child,
     pid: u32,
     daemon: bool,
+    /// The klog child, ignored by the idle check.
+    klog: Vec<u32>,
 }
 
 impl Proc {
@@ -311,7 +356,7 @@ fn wait_idle(p: &mut Proc, sock: Option<&UnixDatagram>) {
             return;
         }
         let queued = sock.map_or(0, outq);
-        if queued == 0 && idle_once(p.pid) {
+        if queued == 0 && idle_once(p.pid, &p.klog) {
             stable += 1;
             if stable >= 3 {
                 return;
@@ -480,9 +525,16 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
     for (k, v) in &case.env {
         cmd.env(k, subst(v, &t));
     }
-    userns_pre_exec(&mut cmd);
+    if case.real_root {
+        prepare_kernel_log();
+        for r in &case.backlog {
+            kmsg_write(r);
+        }
+    } else {
+        userns_pre_exec(&mut cmd);
+    }
     let child = cmd.spawn().expect("spawn metalog");
-    let mut p = Proc { pid: child.id(), child, daemon: false };
+    let mut p = Proc { pid: child.id(), child, daemon: false, klog: Vec::new() };
     let mut parent_status = String::new();
     if case.daemon {
         // The parent exits once daemon() forks; the pid file names the daemon.
@@ -513,6 +565,11 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
             std::thread::sleep(Duration::from_millis(5));
         }
         if sock_path.exists() {
+            if case.real_root {
+                // Let the klog child start, then remember it.
+                std::thread::sleep(Duration::from_millis(100));
+                p.klog = startup_children(p.pid);
+            }
             wait_idle(&mut p, None);
             title = Some(cmdline(p.pid));
         }
@@ -544,6 +601,26 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
                 wait_idle(&mut p, None);
             }
             Step::Sleep(ms) => std::thread::sleep(Duration::from_millis(*ms)),
+            Step::Kmsg(data) => {
+                assert!(case.real_root, "Kmsg needs a real-root case");
+                kmsg_write(data);
+                std::thread::sleep(Duration::from_millis(50));
+                wait_idle(&mut p, None);
+            }
+            Step::KillKlog => {
+                for k in &p.klog {
+                    // SAFETY: signalling the process under test's child.
+                    unsafe { libc::kill(*k as i32, libc::SIGKILL) };
+                }
+                std::thread::sleep(Duration::from_millis(100));
+                wait_idle(&mut p, None);
+            }
+            Step::Sysrq(c) => {
+                assert!(case.real_root, "Sysrq needs a real-root case");
+                std::fs::write("/proc/sysrq-trigger", [*c]).unwrap();
+                std::thread::sleep(Duration::from_millis(50));
+                wait_idle(&mut p, None);
+            }
         }
     }
 
@@ -569,10 +646,68 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
         }
         files.insert("<udp>".into(), got);
     }
+    if case.real_root {
+        // metalog sets the console log level; what it leaves behind matters.
+        files.insert("<printk>".into(), std::fs::read_to_string("/proc/sys/kernel/printk").unwrap_or_default());
+        // The klog child may outlive the master.
+        for k in &p.klog {
+            // SAFETY: signalling a leftover process under test.
+            unsafe { libc::kill(*k as i32, libc::SIGKILL) };
+        }
+    }
     if let Some(title) = title {
         files.insert("<cmdline>".into(), normalize(&title, &t, pid));
     }
     Outcome { status, stdout: rd("stdout"), stderr: rd("stderr"), files }
+}
+
+/// Real-root runs: no printk timestamps (they differ between runs), a known
+/// console level, and nothing left unread in the kernel log (reading it is
+/// destructive, so the first run would see a backlog the second doesn't).
+fn prepare_kernel_log() {
+    std::fs::write("/sys/module/printk/parameters/time", "N").unwrap();
+    std::fs::write("/proc/sys/kernel/printk", "4 4 1 7").unwrap();
+    use std::io::Read;
+    use std::os::unix::fs::OpenOptionsExt;
+    let mut f = std::fs::OpenOptions::new().read(true).custom_flags(libc::O_NONBLOCK).open("/proc/kmsg").unwrap();
+    let mut buf = [0u8; 8192];
+    while matches!(f.read(&mut buf), Ok(n) if n > 0) {}
+}
+
+/// Write one /dev/kmsg record, newline-terminated like `echo` does.  The
+/// kernel keeps a record without a newline open (a continuation could
+/// follow), and readers don't see it until the next record arrives.
+fn kmsg_write(data: &[u8]) {
+    let mut d = data.to_vec();
+    if d.last() != Some(&b'\n') {
+        d.push(b'\n');
+    }
+    std::fs::write("/dev/kmsg", d).unwrap();
+}
+
+/// Whether real-root cases can run here (as root, outside a user namespace).
+pub fn real_root_available() -> bool {
+    // SAFETY: geteuid is always safe.
+    let root = unsafe { libc::geteuid() } == 0;
+    let init_ns =
+        std::fs::read_to_string("/proc/self/uid_map").is_ok_and(|m| m.split_whitespace().nth(2) == Some("4294967295"));
+    root && init_ns
+}
+
+/// Like [`check`], for cases whose outcome depends on timing outside our
+/// control (e.g. how the klog child's writes coalesce in the socket, which
+/// decides where the kernel-line quirk splits): pass if any of `attempts`
+/// C/Rust pairs match.
+pub fn check_racy(case: Case, attempts: usize) -> Outcome {
+    for i in 1..attempts {
+        let c = run(&case, &reference_binary(), "c");
+        let r = run(&case, &rust_binary(), "rust");
+        if c == r {
+            return c;
+        }
+        eprintln!("{}: attempt {i} differed, retrying", case.name);
+    }
+    check(case)
 }
 
 /// Run a case against both implementations and assert identical outcomes.

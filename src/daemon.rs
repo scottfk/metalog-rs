@@ -368,6 +368,11 @@ fn kernel_source(st: &mut State, si: usize) -> i32 {
         sys::signal_ignore(libc::SIGUSR2);
         sys::setpgid(0, pgid);
         sys::setprogname(PROGNAME_KERNEL);
+        // QUIRK: console level then console off.  The matching "console
+        // on" (klogctl(7) below) only runs if the read loop ends; a SIGTERM
+        // from the master kills the child first, so after metalog stops,
+        // kernel messages stay off the console (console_loglevel stays at
+        // its minimum).
         if sys::klogctl(1, None, 0) < 0 || sys::klogctl(8, None, st.console_level) < 0 || sys::klogctl(6, None, 0) < 0 {
             warnp(b"Unable to control the kernel logging device");
             // QUIRK: the child returns into main()'s startup code, which

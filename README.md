@@ -68,8 +68,34 @@ How the harness works, in short:
 `METALOG_DIFF_SHOW=1 cargo test --features unicode -- --nocapture` prints
 every outcome, which is useful for checking that a case tests something.
 
-Not covered by the differential suite: the kernel log path, which needs
-real `klogctl()`, so it's tested in a VM.
+### In the test VM
+
+The kernel log path needs the real root, because a user namespace can't
+use `klogctl()`. The cases in [tests/diff_klog.rs](tests/diff_klog.rs) skip
+anywhere else. They run in the shared test VM (`hydra-openrc-rs-test`,
+snapshot `metalog-base`), which has Gentoo's own `app-admin/metalog` as the
+reference:
+
+```sh
+METALOG_REFERENCE=/usr/sbin/metalog cargo test --features unicode
+```
+
+As real root, the whole suite runs there, and the kernel cases also check:
+
+- records injected through `/dev/kmsg` and real kernel lines (SysRq help);
+- the startup backlog;
+- `--consolelevel`, and the console level left behind;
+- the klog child's death and signals.
+
+They drain the kernel log before each run and run one at a time.
+
+[tools/vm-boot-capture.sh](tools/vm-boot-capture.sh) compares real boots,
+with metalog in the default runlevel and Gentoo's stock config. On
+2026-11-11, two C boots and one Rust boot were compared. With kernel stack
+traces and timestamps filtered out, C vs Rust differed only in ephemeral
+ssh ports, exactly as C vs C did. That included `rc-service metalog
+buffer`/`unbuffer`, the routing into `pwdfail`/`critical`, and the process
+titles.
 
 ## Roadmap
 
@@ -77,8 +103,9 @@ real `klogctl()`, so it's tested in a VM.
    with the differential suite covering the CLI, config parsing, matching,
    formats, timestamps, duplicates, rotation, compression, rate limits,
    commands, signals, remote hosts, daemon mode and startup failures.
-2. **Kernel logging in a VM:** klog child, `--consolelevel`, real boot
-   messages, plus a swap-in test against the C binary as the system logger.
+2. **Kernel logging in a VM (done, branch `phase2-klog`):** the klog child,
+   `--consolelevel` and the startup backlog, diffed against Gentoo's binary.
+   Also real boots, with metalog-rs swapped in as the system logger.
 3. **Packaging:** a Gentoo ebuild (`app-admin/metalog` drop-in, keeping
    Gentoo's init script, conf.d and `consolelog.sh`), rehearsed in the VM.
 4. **Later:** fix quirks as deliberate, separate changes.
