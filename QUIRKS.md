@@ -75,7 +75,10 @@ Each one replaces undefined behavior in C:
   from inside the handler, which is only safe while the main loop is
   blocked in `poll()`. metalog-rs does exactly that when it is in `poll()`.
   If a signal arrives mid-message, the work is deferred until that message
-  is finished. See `daemon.rs`.
+  is finished. See `daemon.rs`. In practice this shows when metalog is
+  stopped: start-stop-daemon logs "Will stop ..." and sends SIGTERM straight
+  away. Over 20 stops in the VM, C logged that line 15 times and
+  metalog-rs 19 times.
 - **Write boundaries.** One `fprintf` that overflows the stdio buffer may be
   split into `write(2)`s at different offsets. The bytes in the file, and
   when they are flushed, are the same. See `stdio.rs`.

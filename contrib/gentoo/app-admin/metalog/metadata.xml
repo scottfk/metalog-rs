@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>scottfk@gmail.com</email>
+	</maintainer>
+	<longdescription>
+		metalog 20260902 with the daemon replaced by metalog-rs, a
+		strict-compatibility Rust port; the configuration, man pages and
+		Gentoo service files are the same as app-admin/metalog's.
+	</longdescription>
+	<use>
+		<flag name="unicode">Keep UTF-8 in messages: only C0 control characters and DEL are replaced (upstream's --with-unicode)</flag>
+		<flag name="zlib">Support compressing rotated logs (compress = 1) with <pkg>virtual/zlib</pkg></flag>
+	</use>
+	<upstream>
+		<remote-id type="codeberg">scottfk/metalog-rs</remote-id>
+		<remote-id type="github">hvisage/metalog</remote-id>
+	</upstream>
+</pkgmetadata>

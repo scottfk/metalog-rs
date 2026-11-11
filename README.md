@@ -106,8 +106,9 @@ titles.
 2. **Kernel logging in a VM (done, branch `phase2-klog`):** the klog child,
    `--consolelevel` and the startup backlog, diffed against Gentoo's binary.
    Also real boots, with metalog-rs swapped in as the system logger.
-3. **Packaging:** a Gentoo ebuild (`app-admin/metalog` drop-in, keeping
-   Gentoo's init script, conf.d and `consolelog.sh`), rehearsed in the VM.
+3. **Packaging (done, branch `phase3-ebuild`):** a live Gentoo ebuild,
+   `app-admin/metalog-20260902_p9999`, a drop-in for `app-admin/metalog`.
+   See [contrib/gentoo/README.md](contrib/gentoo/README.md).
 4. **Later:** fix quirks as deliberate, separate changes.
 
 ## Contributing
