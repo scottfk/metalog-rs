@@ -331,7 +331,7 @@ impl Parser {
             // QUIRK: the new block is a struct copy of the default block, so
             // it shares the default's facility and regex arrays.  Upstream
             // then realloc()s or free()s those shared arrays in place, which
-            // is undefined behaviour; this port copies them instead, which
+            // is undefined behavior; this port copies them instead, which
             // is what happens in practice when realloc doesn't move them.
             let b = self.default_block.clone();
             cfg.blocks.push(b);

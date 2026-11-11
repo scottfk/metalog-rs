@@ -297,7 +297,7 @@ fn logdir_problems() {
     check(Case::new("logdir_is_file", ALL).file("all", b"in the way\n", 0o644).steps([msg(13, "p", None, "x")]));
     check(Case::new("logdir_parent_missing", "All:\n  logdir = \"@T@/a/b/c\"\n").steps([msg(13, "p", None, "x")]));
     check(Case::new("logdir_perms", "All:\n  perms = 0751\n  logdir = \"@T@/all\"\n").steps([msg(13, "p", None, "x")]));
-    // An existing .timestamp is honoured; a corrupt one is rewritten.
+    // An existing .timestamp is honored; a corrupt one is rewritten.
     check(
         Case::new("timestamp_existing", ALL)
             .file("all/.timestamp", b"  1762800000 trailing\n", 0o644)

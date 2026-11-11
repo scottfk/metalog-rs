@@ -1,6 +1,6 @@
 //! Process-level machinery: the global state, signal handlers and their
 //! queue, data sources (the syslog socket and the klog child), the poll
-//! loop, the pid file and daemonising.
+//! loop, the pid file and daemonizing.
 //!
 //! # Signals
 //!
@@ -13,7 +13,7 @@
 //! * `IDLE` (inside `poll()`): do exactly what C does, immediately.
 //! * `BUSY` (handling an event): record the work, and the loop does it as
 //!   soon as the current event is done.  (C would act mid-message, which is
-//!   undefined behaviour.)
+//!   undefined behavior.)
 //! * `STARTUP` and `CHILD` (before the loop, and in the klog child): act
 //!   immediately; there's nothing buffered to flush yet.
 //!
@@ -75,7 +75,7 @@ pub static SYNCHRONOUS: AtomicBool = AtomicBool::new(true);
 pub static VERBOSE: AtomicI32 = AtomicI32::new(0);
 static KEEP_RUNNING: AtomicBool = AtomicBool::new(true);
 static CHILD: AtomicI32 = AtomicI32::new(0);
-/// `dolog_queue[2]`: 0 until created, as for C's zero-initialised statics.
+/// `dolog_queue[2]`: 0 until created, as for C's zero-initialized statics.
 static DOLOG_Q: [AtomicI32; 2] = [AtomicI32::new(0), AtomicI32::new(0)];
 static ATEXIT_REGISTERED: AtomicBool = AtomicBool::new(false);
 static PID_FILE: OnceLock<CString> = OnceLock::new();

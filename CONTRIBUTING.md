@@ -12,7 +12,7 @@ exit status and side effects, down to the byte. It is not a redesign: if upstrea
 odd edge case, we copy the odd edge case and list it in [QUIRKS.md](QUIRKS.md).
 
 The upstream release we track is pinned in [tools/REFERENCE_TAG](tools/REFERENCE_TAG).
-Behaviour is checked against a build of that tag, not against the man pages or against
+Behavior is checked against a build of that tag, not against the man pages or against
 what seems sensible.
 
 Layout (the modules follow upstream's single `src/metalog.c`):
@@ -20,16 +20,16 @@ Layout (the modules follow upstream's single `src/metalog.c`):
 | Module | What it is |
 |--------|------------|
 | `src/config.rs` | `configParser()`/`parseLine()` and the data model. |
-| `src/logline.rs` | Sanitising and parsing received lines, output formats, timestamps. |
+| `src/logline.rs` | Sanitizing and parsing received lines, output formats, timestamps. |
 | `src/process.rs` | `processLogLine()`: matching blocks, commands, remote hosts, `doLog()`. |
 | `src/output.rs` | `writeLogLine()`: duplicates, rate limits, rotation, compression. |
 | `src/daemon.rs` | Signals, the klog child, sockets, the poll loop, pid file. |
 | `src/sys.rs` | Every libc, PCRE2 and zlib call. **The only module with `unsafe` code.** |
-| `src/stdio.rs`, `getopt.rs`, `num.rs`, `strtod.rs`, `bytes.rs` | glibc behaviour that leaks into output (stdio buffering, getopt messages, `strto*`). |
+| `src/stdio.rs`, `getopt.rs`, `num.rs`, `strtod.rs`, `bytes.rs` | glibc behavior that leaks into output (stdio buffering, getopt messages, `strto*`). |
 
 ## What's useful to contribute
 
-- **Behaviour differences.** If metalog-rs does something different from C metalog at
+- **Behavior differences.** If metalog-rs does something different from C metalog at
   the pinned tag, that's a bug. Please send the config, the input (the datagrams, or the
   `logger` command), and both outputs. A new differential test case is even better.
 - **Quirk fixes, as separate changes.** Fixing something listed in QUIRKS.md is welcome,
@@ -41,7 +41,7 @@ Layout (the modules follow upstream's single `src/metalog.c`):
 
 ## What doesn't fit
 
-- **"Improvements" that change behaviour quietly.** New config keywords, changed
+- **"Improvements" that change behavior quietly.** New config keywords, changed
   defaults and nicer messages belong upstream in metalog first. Once they ship in a
   tagged release, we'll match them.
 - **New dependencies** without a strong reason. The only crate is `libc`, and I'd like to
@@ -79,9 +79,9 @@ input. The harness lives in [tests/common/mod.rs](tests/common/mod.rs):
 - The exit status, stdout, stderr, every file written, UDP datagrams and the process
   title are compared.
 
-When you fix a difference or change behaviour, add cases that cover it, including error
+When you fix a difference or change behavior, add cases that cover it, including error
 paths and odd input. Unit tests are fine for internal helpers, but a differential test is
-what shows the behaviour matches. To check that a case really tests something, look at
+what shows the behavior matches. To check that a case really tests something, look at
 what C produced: `METALOG_DIFF_SHOW=1 cargo test --features unicode -- --nocapture`.
 
 The kernel log path (`klogctl()`) can't run in a user namespace; it's tested in a VM.
@@ -108,7 +108,7 @@ The repo lives at <https://codeberg.org/scottfk/metalog-rs>.
 
 1. Fork the repo and create a branch.
 2. Make your change, with tests.
-3. In the PR description, explain **what** changed and **why**. For a behaviour fix,
+3. In the PR description, explain **what** changed and **why**. For a behavior fix,
    include the input that showed the difference.
 4. If you bumped or tested against a different upstream tag, say which one.
 

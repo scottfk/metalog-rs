@@ -179,7 +179,7 @@ pub fn do_log(st: &mut State, msg: &[u8]) {
     process_log_line(st, None, libc::LOG_SYSLOG, b"metalog", Some(pid.as_bytes()), msg);
 }
 
-/// `log_line()`: sanitise, parse, process one received line.  `buf` is a
+/// `log_line()`: sanitize, parse, process one received line.  `buf` is a
 /// NUL-terminated buffer the parser may write NULs into.
 pub fn log_line(st: &mut State, source: usize, buf: &mut [u8]) -> i32 {
     logline::sanitize(buf);

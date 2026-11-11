@@ -1,7 +1,7 @@
 # Upstream quirks, kept on purpose
 
 metalog-rs reproduces metalog **20260902** ("metalog version 4") exactly,
-including behaviour that looks like a bug. Each item here is marked `QUIRK`
+including behavior that looks like a bug. Each item here is marked `QUIRK`
 in the source. Fixing one is a deliberate, separate change (ideally upstream
 as well), not something to slip into the port.
 
@@ -46,7 +46,7 @@ hit.
 | medium | `command` checks only that the first word exists, but then executes the whole value, arguments and all, as the program path. A command with arguments never runs, and it logs "exited with return code 127". | `config.rs` |
 | medium | In a `configdir`, each file overwrites the result of the previous one, so an error in one file (which stops parsing that file) is ignored if a later file parses cleanly. Only an error in the last file fails the config. | `config.rs` (`parse_config`) |
 | low | A line that is not a block header, comment or `key = value` is silently ignored, as is an unquoted value ending in `:` (that line is taken as a new block header). | `config.rs` |
-| low | Statements before the first block set defaults for all later blocks. Upstream copies the default block's facility and regex arrays by pointer and then `realloc()`s or `free()`s them in place, which is undefined behaviour. This port copies them, which is what happens when `realloc` doesn't move them. | `config.rs` |
+| low | Statements before the first block set defaults for all later blocks. Upstream copies the default block's facility and regex arrays by pointer and then `realloc()`s or `free()`s them in place, which is undefined behavior. This port copies them, which is what happens when `realloc` doesn't move them. | `config.rs` |
 | low | An invalid `log_format` warns with an extra blank line and falls back to RFC 5424, not to the real default. | `config.rs` (`translate_log_format`) |
 | low | Removing the last remote host from a block (`remote_log = 0`) warns `realloc(0x..., 0) failed: Success`. | `config.rs` |
 | low | `ratelimit` values whose interval doesn't fit in 64 bits (`1e-300/s`, `nan/s`) trip an `assert()`, and metalog aborts. | `config.rs` |
@@ -68,7 +68,7 @@ hit.
 ## Intentional differences
 
 These are the only places where metalog-rs knowingly behaves differently.
-Each one replaces undefined behaviour in C:
+Each one replaces undefined behavior in C:
 
 - **Signals while busy.** Upstream's handlers flush files and `_exit()`
   from inside the handler, which is only safe while the main loop is

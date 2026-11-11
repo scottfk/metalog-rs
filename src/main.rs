@@ -1,18 +1,18 @@
 //! metalog-rs: a drop-in Rust port of metalog (upstream tag 20260902,
 //! "metalog version 4"), the syslogd/klogd replacement.
 //!
-//! The goal is byte-for-byte compatible behaviour with the C program,
+//! The goal is byte-for-byte compatible behavior with the C program,
 //! upstream quirks included (see QUIRKS.md); `make check` diffs the two.
 //! Module map, following upstream's single metalog.c:
 //!
 //! * [`config`]: `configParser()`/`parseLine()` and the data model
-//! * [`logline`]: sanitising, parsing and formatting lines, timestamps
+//! * [`logline`]: sanitizing, parsing and formatting lines, timestamps
 //! * [`process`]: `processLogLine()`, commands, remote hosts, `doLog()`
 //! * [`output`]: `writeLogLine()`, rotation, compression, rate limiting
 //! * [`daemon`]: signals, data sources, the poll loop, pid file
 //! * [`sys`]: every libc/PCRE2/zlib call (the only `unsafe` code)
 //! * [`stdio`], [`getopt`], [`num`], [`strtod`], [`bytes`]: glibc
-//!   behaviour the output depends on
+//!   behavior the output depends on
 
 // Copied from openrc-rs and kept in sync there, so unused helpers stay.
 #[allow(dead_code)]

@@ -1,4 +1,4 @@
-//! One log line: sanitising and parsing what arrives on a socket, building
+//! One log line: sanitizing and parsing what arrives on a socket, building
 //! the text that gets written, and the timestamps (upstream `sanitize()`,
 //! `parseLogLine()`, `build_log_line()`, `get_stamp_fmt_timestamp()`).
 //!

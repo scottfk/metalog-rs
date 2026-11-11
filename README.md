@@ -23,12 +23,12 @@ The modules follow upstream's single `metalog.c`:
 | Path | What |
 |---|---|
 | `src/config.rs` | `metalog.conf` parser and the data model (blocks, outputs, remote hosts, sources) |
-| `src/logline.rs` | Sanitising and parsing received lines, the four output formats, timestamps (`%N`, `%:z`) |
+| `src/logline.rs` | Sanitizing and parsing received lines, the four output formats, timestamps (`%N`, `%:z`) |
 | `src/process.rs` | Routing a line through the blocks, commands, remote UDP hosts, metalog's own messages |
 | `src/output.rs` | Writing log directories: duplicates, rate limiting, rotation, retention, compression |
-| `src/daemon.rs` | Signals, the klog child, sockets, the poll loop, pid file, daemonising |
+| `src/daemon.rs` | Signals, the klog child, sockets, the poll loop, pid file, daemonizing |
 | `src/sys.rs` | Every libc, PCRE2 and zlib call: the only `unsafe` code |
-| `src/stdio.rs`, `getopt.rs`, `num.rs`, `strtod.rs`, `bytes.rs` | glibc behaviour that the output depends on: stdio buffering, `getopt_long` messages, `strto*`. `getopt.rs`, `num.rs` and `bytes.rs` are copied from openrc-rs. |
+| `src/stdio.rs`, `getopt.rs`, `num.rs`, `strtod.rs`, `bytes.rs` | glibc behavior that the output depends on: stdio buffering, `getopt_long` messages, `strto*`. `getopt.rs`, `num.rs` and `bytes.rs` are copied from openrc-rs. |
 | `tests/` | Differential tests (C vs Rust) and the harness ([tests/common/mod.rs](tests/common/mod.rs)) |
 | `tests/shim/faketime.c` | LD_PRELOAD clock that makes timestamps and rotation testable |
 | `tools/build-reference.sh` | Builds upstream C metalog at [tools/REFERENCE_TAG](tools/REFERENCE_TAG) |

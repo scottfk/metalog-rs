@@ -9,7 +9,7 @@
 //!
 //! After the steps, metalog gets SIGTERM (unless it already exited) and
 //! the harness compares: the exit status, stdout, stderr, and every file
-//! under `T` (type, permissions, contents), with `T` and pids normalised.
+//! under `T` (type, permissions, contents), with `T` and pids normalized.
 //!
 //! The reference binary comes from `$METALOG_REFERENCE`, default
 //! `../metalog/src/metalog` (tools/build-reference.sh builds it there).
@@ -148,7 +148,7 @@ impl Case {
     }
 }
 
-/// What a run left behind, normalised.
+/// What a run left behind, normalized.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Outcome {
     pub status: String,
@@ -275,7 +275,7 @@ impl Proc {
     }
 
     fn kill(&mut self) {
-        // SAFETY: signalling the process under test.
+        // SAFETY: signaling the process under test.
         unsafe { libc::kill(self.pid as i32, libc::SIGKILL) };
         let _ = self.child.wait();
     }
@@ -359,17 +359,17 @@ fn snapshot(t: &Path, pid: u32) -> BTreeMap<String, String> {
                 format!("symlink -> {}", std::fs::read_link(&p).unwrap().display())
             } else {
                 let Ok(data) = std::fs::read(&p) else {
-                    out.insert(normalise(&rel, base, pid), format!("file {mode:o} (unreadable)"));
+                    out.insert(normalize(&rel, base, pid), format!("file {mode:o} (unreadable)"));
                     continue;
                 };
                 let text = if p.extension().is_some_and(|x| x == "gz") {
                     format!("gzip {} bytes: {:02x?}", data.len(), data)
                 } else {
-                    normalise(&String::from_utf8_lossy(&data), base, pid)
+                    normalize(&String::from_utf8_lossy(&data), base, pid)
                 };
                 format!("file {mode:o}\n{text}")
             };
-            out.insert(normalise(&rel, base, pid), desc);
+            out.insert(normalize(&rel, base, pid), desc);
         }
     }
     walk(t, t, &skip, pid, &mut out);
@@ -378,7 +378,7 @@ fn snapshot(t: &Path, pid: u32) -> BTreeMap<String, String> {
 
 /// Replace `T` with `@T@`, the master's pid with `@PID@`, and other pids
 /// in metalog's own messages with `@CPID@`.
-pub fn normalise(s: &str, t: &Path, pid: u32) -> String {
+pub fn normalize(s: &str, t: &Path, pid: u32) -> String {
     let s = s.replace(t.to_str().unwrap(), "@T@");
     let mut out = String::new();
     let pid_s = pid.to_string();
@@ -534,7 +534,7 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
             }
             Step::Time(s, ns) => write_time(&t, (*s, *ns)),
             Step::Signal(sig) => {
-                // SAFETY: signalling the process under test.
+                // SAFETY: signaling the process under test.
                 unsafe { libc::kill(p.pid as i32, *sig) };
                 std::thread::sleep(Duration::from_millis(20));
                 wait_idle(&mut p, None);
@@ -548,7 +548,7 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
     }
 
     if case.terminate && p.alive() {
-        // SAFETY: signalling the process under test.
+        // SAFETY: signaling the process under test.
         unsafe { libc::kill(p.pid as i32, libc::SIGTERM) };
     }
     let mut status = p.wait_exit(&format!("{}: {label}", case.name));
@@ -559,18 +559,18 @@ pub fn run(case: &Case, bin: &Path, label: &str) -> Outcome {
     std::thread::sleep(Duration::from_millis(30));
     let pid = p.pid;
 
-    let rd = |n: &str| normalise(&String::from_utf8_lossy(&std::fs::read(t.join(n)).unwrap()), &t, pid);
+    let rd = |n: &str| normalize(&String::from_utf8_lossy(&std::fs::read(t.join(n)).unwrap()), &t, pid);
     let mut files = snapshot(&t, pid);
     if let Some(u) = &udp {
         let mut got = String::new();
         let mut buf = [0u8; 65536];
         while let Ok(n) = u.recv(&mut buf) {
-            got += &format!("{:?}\n", normalise(&String::from_utf8_lossy(&buf[..n]), &t, pid));
+            got += &format!("{:?}\n", normalize(&String::from_utf8_lossy(&buf[..n]), &t, pid));
         }
         files.insert("<udp>".into(), got);
     }
     if let Some(title) = title {
-        files.insert("<cmdline>".into(), normalise(&title, &t, pid));
+        files.insert("<cmdline>".into(), normalize(&title, &t, pid));
     }
     Outcome { status, stdout: rd("stdout"), stderr: rd("stderr"), files }
 }

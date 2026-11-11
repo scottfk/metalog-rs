@@ -18,14 +18,14 @@ These are the kinds of bugs I most want to hear about:
   datagrams, control characters, floods.
 - **Memory safety.** Unsoundness in the `unsafe` code in `src/sys.rs` or in the signal
   handling (`src/daemon.rs`), or anything reachable from safe code that causes undefined
-  behaviour.
+  behavior.
 - **Files and commands.** Ways to make metalog write, rotate, compress or delete files
   outside its log directories, or to influence the commands it runs (`command`,
   `postrotate_cmd`) and their arguments.
 - **Divergence from upstream that weakens security.** For example, a permission or a
-  sanitising step that C metalog applies and metalog-rs skips.
+  sanitizing step that C metalog applies and metalog-rs skips.
 
-Some upstream behaviour is reproduced on purpose and is already listed in
+Some upstream behavior is reproduced on purpose and is already listed in
 [QUIRKS.md](QUIRKS.md), including a crash after a failed DNS re-lookup for a remote host.
 Reports about those are still welcome, especially if the impact is worse than described.
 They will be fixed as deliberate changes.

@@ -168,7 +168,7 @@ pub fn write_log_line(
             return 0;
         }
         // QUIRK: when the buffer has to grow, the new text is stored but
-        // its length isn't, so the next identical line isn't recognised as
+        // its length isn't, so the next identical line isn't recognized as
         // a repeat (repeats are only folded from the third copy on), and a
         // later shorter line can match the start of the stored text.
         if sizeof_info > dt.prev_info.len() {

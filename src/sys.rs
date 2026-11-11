@@ -64,7 +64,7 @@ pub fn write(fd: Fd, data: &[u8]) -> isize {
 }
 
 /// Write everything, retrying on EINTR, giving up on other errors (stdio's
-/// flush behaviour; metalog ignores output errors).
+/// flush behavior; metalog ignores output errors).
 pub fn write_all(fd: Fd, mut data: &[u8]) -> bool {
     while !data.is_empty() {
         let n = write(fd, data);
@@ -132,7 +132,7 @@ pub fn stat(path: &[u8]) -> Result<Stat, i32> {
     if unsafe { libc::stat(p.as_ptr(), st.as_mut_ptr()) } < 0 {
         return Err(fail());
     }
-    // SAFETY: initialised by the successful stat.
+    // SAFETY: initialized by the successful stat.
     Ok(conv_stat(unsafe { st.assume_init_ref() }))
 }
 
@@ -142,7 +142,7 @@ pub fn fstat(fd: Fd) -> Result<Stat, i32> {
     if unsafe { libc::fstat(fd, st.as_mut_ptr()) } < 0 {
         return Err(fail());
     }
-    // SAFETY: initialised by the successful fstat.
+    // SAFETY: initialized by the successful fstat.
     Ok(conv_stat(unsafe { st.assume_init_ref() }))
 }
 
