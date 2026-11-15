@@ -3,7 +3,7 @@ name = "metalog-rs"
 version = "0.1.0"
 edition = "2024"
 license = "GPL-2.0-only"
-repository = "https://codeberg.org/scottfk/metalog-rs"
+repository = "https://github.com/scottfk/metalog-rs"
 description = "Drop-in Rust port of metalog, the syslogd/klogd replacement"
 rust-version = "1.88"
 
