@@ -104,7 +104,7 @@ The kernel log path (`klogctl()`) can't run in a user namespace; it's tested in 
 
 ## How to submit changes
 
-The repo lives at <https://codeberg.org/scottfk/metalog-rs>.
+The repo lives at <https://github.com/scottfk/metalog-rs>.
 
 1. Fork the repo and create a branch.
 2. Make your change, with tests.

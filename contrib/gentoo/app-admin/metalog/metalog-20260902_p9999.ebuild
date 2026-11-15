@@ -1,6 +1,7 @@
 # Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 # 20261111 - Created by Claude (claude.ai, Anthropic) - scottfk
+# 20261115 - Fetch from GitHub; the repo moved off Codeberg - Claude - scottfk
 
 # metalog 20260902 with the daemon from metalog-rs (a strict-compatibility
 # Rust port, built live from git).  Upstream's release supplies the
@@ -19,8 +20,8 @@ RUST_MIN_VER="1.88.0"
 inherit cargo git-r3 systemd
 
 DESCRIPTION="Highly configurable replacement for syslogd/klogd (metalog-rs daemon)"
-HOMEPAGE="https://codeberg.org/scottfk/metalog-rs https://github.com/hvisage/metalog"
-EGIT_REPO_URI="https://codeberg.org/scottfk/metalog-rs.git"
+HOMEPAGE="https://github.com/scottfk/metalog-rs https://github.com/hvisage/metalog"
+EGIT_REPO_URI="https://github.com/scottfk/metalog-rs.git"
 SRC_URI="
 	https://github.com/hvisage/metalog/archive/refs/tags/${METALOG_PV}.tar.gz -> metalog-${METALOG_PV}.gh.tar.gz
 	${CARGO_CRATE_URIS}

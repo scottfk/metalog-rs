@@ -14,7 +14,7 @@
 		<flag name="zlib">Support compressing rotated logs (compress = 1) with <pkg>virtual/zlib</pkg></flag>
 	</use>
 	<upstream>
-		<remote-id type="codeberg">scottfk/metalog-rs</remote-id>
+		<remote-id type="github">scottfk/metalog-rs</remote-id>
 		<remote-id type="github">hvisage/metalog</remote-id>
 	</upstream>
 </pkgmetadata>
